@@ -15,25 +15,92 @@ const SDL_Color palette[16] = {
 };
 
 class Pallete {
+private:
+  int selectedIndex = 0;
+  std::map<int, SDL_Rect> rectMap;
+  int offsetX = 0;
+  int offsetY = 0;
+
 public:
+  Pallete();
+  void update();
   void render(int x, int y);
+  int getSelectedIndex();
+  void setSelectedIndex(int index);
+  SDL_Color getSelectedColor();
+  SDL_Color getColor(int index);
 };
+
+int Pallete::getSelectedIndex() {
+  return selectedIndex;
+}
+
+void Pallete::setSelectedIndex(int index) {
+  selectedIndex = index;
+}
+
+SDL_Color Pallete::getSelectedColor() {
+  return palette[selectedIndex];
+}
+
+SDL_Color Pallete::getColor(int index) {
+  return palette[index];
+}
+
+Pallete::Pallete() {
+  int size = 16;
+  for (int row = 0; row < 4; row++) {
+    for (int col = 0; col < 4; col++) {
+      int posX = row * size;
+      int posY = col * size;
+      SDL_Rect rect = {posX, posY, size, size};
+      int i = col * 4 + row;
+      rectMap[i] = rect;
+    }
+  }
+}
+
+void Pallete::update() {
+  SDL_Event event;
+
+    // Handle events
+    while (SDL_PollEvent(&event) != 0)
+    {
+      if (event.type == SDL_MOUSEBUTTONDOWN) {
+        std::cout << "Selected index: " << selectedIndex << std::endl;
+
+        for (auto it = rectMap.begin(); it != rectMap.end(); ++it) {
+          int i = it->first;
+          SDL_Rect value = it->second;
+          SDL_Rect rect = {value.x + offsetX, value.y + offsetY, value.w, value.h};
+          SDL_Point point = {event.button.x, event.button.y};
+          if (SDL_PointInRect(&point, &rect)) {
+            selectedIndex = i;
+            std::cout << "Selected index: " << selectedIndex << std::endl;
+          }
+        }
+      }
+    }
+}
 
 
 void Pallete::render(int x, int y){
   SDL_Renderer *renderer = Renderer::getInstance().getRenderer();
+  offsetX = x;
+  offsetY = y;
 
-  int posX = x;
-  int posY = y;
-  int size = 16;
+  for (auto it = rectMap.begin(); it != rectMap.end(); ++it) {
+    int i = it->first;
+    SDL_Color color = palette[i];
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
-  for (int x = 0; x < 4; x++) {
-    for (int y = 0; y < 4; y++) {
-      SDL_Rect rect = {x * size + posX, y * size + posY, size, size};
-      int i = y * 4 + x;
-      SDL_SetRenderDrawColor(renderer, palette[i].r, palette[i].g, palette[i].b,
-                              palette[i].a);
-      SDL_RenderFillRect(renderer, &rect);
+    SDL_Rect value = it->second;
+    SDL_Rect rect = {value.x + x, value.y + y, value.w, value.h};
+    SDL_RenderFillRect(renderer, &rect);
+
+    if (i == selectedIndex) {
+      SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+      SDL_RenderDrawRect(renderer, &rect);
     }
   }
 }

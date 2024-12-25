@@ -100,13 +100,14 @@ void App::update()
       }
     }
 
+    pallete->update();
+
     // Clear the screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
 
     canvas->render(8, 8, 128, 128);
-
     pallete->render(128 + 16, 8);
 
     SDL_Color color = {255, 255, 255, 255};
