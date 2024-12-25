@@ -12,7 +12,7 @@
 #include <Canvas.h>
 #include <Vector2.h>
 #include <Renderer.h>
-// #include <Pallete.h>
+#include <Pallete.h>
 
 class App
 {
@@ -29,10 +29,10 @@ private:
   int windowHeight;
   bool quit = false;
 
-  SDL_Event *event;
+  SDL_Event event;
   Canvas *canvas;
   Font *font;
-  // Pallete *pallete;
+  Pallete *pallete;
 };
 
 App::App()
@@ -50,7 +50,7 @@ App::App()
   }
 
   // Create a window
-  window = SDL_CreateWindow("SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+  window = SDL_CreateWindow("Sprite Editor", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                             windowWidth, windowHeight, SDL_WINDOW_SHOWN);
   if (window == nullptr)
   {
@@ -74,13 +74,8 @@ App::App()
   SDL_RenderSetLogicalSize(renderer, width, height);
 
   canvas = new Canvas();
-  std::cout << "canvas" << std::endl;
-
   font = new Font();
-  std::cout << "font" << std::endl;
-
-  // pallete = new Pallete();
-  std::cout << "pallete" << std::endl;
+  pallete = new Pallete();
 }
 
 // Game loop
@@ -88,51 +83,36 @@ void App::update()
 {
 
   Vector2 mousePos = {0, 0};
-  std::cout << "mousePos" << std::endl;
 
   while (!quit)
   {
     // Handle events
-    while (SDL_PollEvent(event) != 0)
+    while (SDL_PollEvent(&event) != 0)
     {
-      if (event->type == SDL_QUIT)
+      if (event.type == SDL_QUIT)
       {
         quit = true;
       }
-      else if (event->type == SDL_MOUSEMOTION)
+      else if (event.type == SDL_MOUSEMOTION)
       {
-        mousePos.x = event->motion.x;
-        mousePos.y = event->motion.y;
-        // std::cout << "Mouse: " << mousePos.x << ", " << mousePos.y <<
-        // std::endl;
+        mousePos.x = event.motion.x;
+        mousePos.y = event.motion.y;
       }
-    }
-
-    if (renderer == nullptr)
-    {
-      std::cerr << "Renderer is null" << std::endl;
-      return;
     }
 
     // Clear the screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    std::cout << "clear" << std::endl;
 
-    if (canvas != nullptr)
-    {
-      canvas->render(8, 8, 128, 128);
-    }
-    // pallete->render(128 + 16, 8);
+    canvas->render(8, 8, 128, 128);
 
-    if (font != nullptr)
-    {
-      SDL_Color color = {255, 255, 255, 255};
-      char text[50];
-      std::snprintf(text, sizeof(text), "%d, %d", mousePos.x, mousePos.y);
-      font->renderText(text, 8, height - 16, color);
-    }
+    pallete->render(128 + 16, 8);
+
+    SDL_Color color = {255, 255, 255, 255};
+    char text[50];
+    std::snprintf(text, sizeof(text), "%d, %d", mousePos.x, mousePos.y);
+    font->renderText(text, 8, height - 16, color);
 
     // Present the rendered frame
     SDL_RenderPresent(renderer);
