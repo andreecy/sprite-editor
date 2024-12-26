@@ -3,16 +3,13 @@
 #include <SDL2/SDL.h>
 #include <SDL_image.h>
 #include <iostream>
-#include <map>
 #include <string>
-#include <vector>
 #include <cstdio>
 
-#include <Text.h>
 #include <Canvas.h>
-#include <Vector2.h>
 #include <Renderer.h>
 #include <Pallete.h>
+#include <EventManager.h>
 
 class App
 {
@@ -29,7 +26,7 @@ private:
   int windowHeight;
   bool quit = false;
 
-  SDL_Event event;
+  EventManager *eventManager;
   Canvas *canvas;
   Font *font;
   Pallete *pallete;
@@ -73,47 +70,40 @@ App::App()
 
   SDL_RenderSetLogicalSize(renderer, width, height);
 
-  canvas = new Canvas();
-  font = new Font();
   pallete = new Pallete();
+  canvas = new Canvas(8, 8, 128, 128);
+  canvas->setPallete(pallete);
+
+  eventManager = new EventManager();
+  eventManager->addReceiver(pallete);
+  eventManager->addReceiver(canvas);
 }
 
 // Game loop
 void App::update()
 {
-
-  Vector2 mousePos = {0, 0};
-
+  SDL_Event event;
   while (!quit)
   {
     // Handle events
     while (SDL_PollEvent(&event) != 0)
     {
+      eventManager->handleEvent(event);
+
+      // handle quit event
       if (event.type == SDL_QUIT)
       {
         quit = true;
-      }
-      else if (event.type == SDL_MOUSEMOTION)
-      {
-        mousePos.x = event.motion.x;
-        mousePos.y = event.motion.y;
+        break;
       }
     }
 
-    pallete->update();
-
     // Clear the screen
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
     SDL_RenderClear(renderer);
 
-
-    canvas->render(8, 8, 128, 128);
+    canvas->render();
     pallete->render(128 + 16, 8);
-
-    SDL_Color color = {255, 255, 255, 255};
-    char text[50];
-    std::snprintf(text, sizeof(text), "%d, %d", mousePos.x, mousePos.y);
-    font->renderText(text, 8, height - 16, color);
 
     // Present the rendered frame
     SDL_RenderPresent(renderer);

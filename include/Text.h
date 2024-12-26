@@ -21,18 +21,25 @@ private:
   SDL_Texture *fontTexture;
   std::map<char, CharData> charMap;
 
-public:
+private:
   Font();
   ~Font();
-
   bool loadFont(const std::string &filename);
-  void renderText(const std::string &text, int x, int y, SDL_Color color);
+
+public:
+  static Font &getInstance(){
+    static Font instance;
+    return instance;
+  }
+
+  SDL_Texture *getFontTexture() { return fontTexture; }
+  std::map<char, CharData> &getCharMap() { return charMap; }
 };
 
 Font::Font() {
-  this->renderer = Renderer::getInstance().getRenderer();
-  this->fontTexture = nullptr;
-  this->charMap.clear();
+  renderer = Renderer::getInstance().getRenderer();
+  fontTexture = nullptr;
+  charMap.clear();
 
   if (!loadFont("../fonts/white.png")) {
     std::cerr << "Failed to load font" << std::endl;
@@ -108,17 +115,23 @@ bool Font::loadFont(const std::string &filename) {
 }
 
 // Function to render text using the loaded font
-void Font::renderText(const std::string &text, int x, int y, SDL_Color color) {
-  SDL_SetTextureColorMod(fontTexture, color.r, color.g,
-                         color.b); // Set color modulation
+void renderText(const std::string &text, int x, int y, SDL_Color color) {
+  Font &font = Font::getInstance();
+
+  SDL_Renderer *renderer = Renderer::getInstance().getRenderer();
+
+  SDL_Texture *fontTexture = font.getFontTexture();
+  std::map<char, CharData> &charMap = font.getCharMap();
+
+  SDL_SetTextureColorMod(fontTexture, color.r, color.g, color.b); // Set color modulation
   int currentX = x;
   for (char c : text) {
-    if (this->charMap.find(c) != this->charMap.end()) {
-      const CharData &charData = this->charMap.at(c);
+    if (charMap.find(c) != charMap.end()) {
+      const CharData &charData = charMap.at(c);
 
       SDL_Rect destRect = {currentX + charData.x_offset, y + charData.y_offset,
                            charData.rect.w, charData.rect.h};
-      SDL_RenderCopy(this->renderer, fontTexture, &charData.rect, &destRect);
+      SDL_RenderCopy(renderer, fontTexture, &charData.rect, &destRect);
 
       currentX += charData.x_advance;
     }

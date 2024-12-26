@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <EventManager.h>
 
 // https://lospec.com/palette-list/sweetie-16
 const SDL_Color palette[16] = {
@@ -14,7 +15,7 @@ const SDL_Color palette[16] = {
     {0x56, 0x6c, 0x86, 0xff}, {0x33, 0x3c, 0x57, 0xff},
 };
 
-class Pallete {
+class Pallete : public EventReceiver {
 private:
   int selectedIndex = 0;
   std::map<int, SDL_Rect> rectMap;
@@ -23,12 +24,25 @@ private:
 
 public:
   Pallete();
-  void update();
   void render(int x, int y);
   int getSelectedIndex();
   void setSelectedIndex(int index);
   SDL_Color getSelectedColor();
   SDL_Color getColor(int index);
+  void handleEvent(SDL_Event &event) override {
+    if (event.type == SDL_MOUSEBUTTONDOWN) {
+      for (auto it = rectMap.begin(); it != rectMap.end(); ++it) {
+        int i = it->first;
+        SDL_Rect value = it->second;
+        SDL_Rect rect = {value.x + offsetX, value.y + offsetY, value.w, value.h};
+        SDL_Point point = {event.button.x, event.button.y};
+        if (SDL_PointInRect(&point, &rect)) {
+          selectedIndex = i;
+          std::cout << "Selected index: " << selectedIndex << std::endl;
+        }
+      }
+    }
+  }
 };
 
 int Pallete::getSelectedIndex() {
@@ -59,30 +73,6 @@ Pallete::Pallete() {
     }
   }
 }
-
-void Pallete::update() {
-  SDL_Event event;
-
-    // Handle events
-    while (SDL_PollEvent(&event) != 0)
-    {
-      if (event.type == SDL_MOUSEBUTTONDOWN) {
-        std::cout << "Selected index: " << selectedIndex << std::endl;
-
-        for (auto it = rectMap.begin(); it != rectMap.end(); ++it) {
-          int i = it->first;
-          SDL_Rect value = it->second;
-          SDL_Rect rect = {value.x + offsetX, value.y + offsetY, value.w, value.h};
-          SDL_Point point = {event.button.x, event.button.y};
-          if (SDL_PointInRect(&point, &rect)) {
-            selectedIndex = i;
-            std::cout << "Selected index: " << selectedIndex << std::endl;
-          }
-        }
-      }
-    }
-}
-
 
 void Pallete::render(int x, int y){
   SDL_Renderer *renderer = Renderer::getInstance().getRenderer();
