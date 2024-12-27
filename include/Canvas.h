@@ -13,13 +13,26 @@ public:
   void render();
 
   void handleEvent(SDL_Event &event) override {
-    if (event.type == SDL_MOUSEMOTION)
+    switch(event.type)
     {
-      globalMousePosition.x = event.motion.x;
-      globalMousePosition.y = event.motion.y;
+      case SDL_MOUSEBUTTONDOWN:
+        if(event.button.button == SDL_BUTTON_LEFT){
+          drawing = true;
+        }
+        break;
+      case SDL_MOUSEBUTTONUP:
+        if(event.button.button == SDL_BUTTON_LEFT){
+          drawing = false;
+        }
+        break;
+      case SDL_MOUSEMOTION:
+        globalMousePosition.x = event.motion.x;
+        globalMousePosition.y = event.motion.y;
+        break;
     }
-    else if (event.type == SDL_MOUSEBUTTONDOWN) {
-      handleDraw(event);
+
+    if(drawing){
+      handleDrawing();
     }
   }
 
@@ -34,7 +47,7 @@ public:
   }
 
 private:
-  void handleDraw(SDL_Event &event);
+  void handleDrawing();
 
 private:
   SDL_Renderer *renderer;
@@ -48,9 +61,10 @@ private:
   int spriteScale = 8; // 1px = 8px
   int spriteWidth;
   int spriteHeight;
-  Uint32 pixels;
+  Uint32 *pixels;
   SDL_Texture *texture;
   Vector2 globalMousePosition = {0, 0};
+  bool drawing = false;
 };
 
 Canvas::Canvas(int x, int y, int width, int height) {
@@ -61,38 +75,33 @@ Canvas::Canvas(int x, int y, int width, int height) {
 
   spriteWidth = 16;
   spriteHeight = 16;
-  Uint32 pixels[spriteWidth * spriteHeight];
+  pixels = new Uint32[spriteWidth * spriteHeight];
 
-  for (int i = 0; i < spriteWidth * spriteHeight; i++) {
-    pixels[i] = 0xFF000000; // ARGB
+  // fill pixels with transparent
+  for(int i = 0; i < spriteWidth * spriteHeight; i++ ) {
+    pixels[i] = 0x00000000;
   }
 
   renderer = Renderer::getInstance().getRenderer();
 
-  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, spriteWidth, spriteHeight);
+  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, spriteWidth, spriteHeight);
   if (texture == nullptr) {
       std::cerr << "Unable to create texture! SDL Error: " << SDL_GetError() << std::endl;
   }
-
-  void *texturePixels;
-  int pitch;
-  if (SDL_LockTexture(texture, nullptr, &texturePixels, &pitch) != 0) {
-    std::cerr << "Could not lock texture: " << SDL_GetError() << std::endl;
-    SDL_DestroyTexture(texture);
-  }
-  memcpy(texturePixels, pixels, spriteWidth * spriteHeight * sizeof(Uint32));
-  SDL_UnlockTexture(texture);
 }
 
 void Canvas::render() {
+  // Background of canvas
   SDL_Rect rect = {x, y, width, height};
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xff);
   SDL_RenderFillRect(renderer, &rect);
 
-  // Draw texture
-  SDL_Rect destRect = { x, y, spriteWidth, spriteHeight };
+  // Draw sprite
+  SDL_UpdateTexture(texture, NULL, pixels, spriteWidth * sizeof(Uint32));
+  SDL_Rect destRect = { x, y, width, height };
   SDL_RenderCopy(renderer, texture, nullptr, &destRect);
 
+  // text
   SDL_Color color = {255, 255, 255, 255};
   char text[50];
   Vector2 mousePosition = getMousePosition();
@@ -100,14 +109,16 @@ void Canvas::render() {
   renderText(text, 8, height + 16, color);
 }
 
-void Canvas::handleDraw(SDL_Event &event) {
+void Canvas::handleDrawing() {
   Vector2 targetPos = getMousePosition();
   // check if target position is within canvas
   if (targetPos.x >= 0 && targetPos.x < spriteWidth && targetPos.y >= 0 && targetPos.y < spriteHeight) {
     // get current color in pallete
     int colorIdx = pallete->getSelectedIndex();
+    Uint32 color = pallete->getColor(colorIdx);
 
-    std::cout << "draw target: " << targetPos.x << ", " << targetPos.y << std::endl;
-    std::cout << "with color index: " << colorIdx << std::endl;
+    // std::cout << "draw target: " << targetPos.x << ", " << targetPos.y << std::endl;
+    // std::cout << "with color index: " << colorIdx  << ", color: " << color << std::endl;
+    pixels[targetPos.x + targetPos.y * spriteWidth] = color;
   }
 }

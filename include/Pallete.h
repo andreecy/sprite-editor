@@ -2,17 +2,18 @@
 
 #include <SDL2/SDL.h>
 #include <EventManager.h>
+#include <Color.h>
 
 // https://lospec.com/palette-list/sweetie-16
-const SDL_Color palette[16] = {
-    {0x1a, 0x1c, 0x2c, 0xff}, {0x5d, 0x27, 0x5d, 0xff},
-    {0xb1, 0x3e, 0x53, 0xff}, {0xef, 0x7d, 0x57, 0xff},
-    {0xff, 0xcd, 0x75, 0xff}, {0xa7, 0xf0, 0x70, 0xff},
-    {0x38, 0xb7, 0x64, 0xff}, {0x25, 0x71, 0x79, 0xff},
-    {0x29, 0x36, 0x6f, 0xff}, {0x3b, 0x5d, 0xc9, 0xff},
-    {0x41, 0xa6, 0xf6, 0xff}, {0x73, 0xef, 0xf7, 0xff},
-    {0xf4, 0xf4, 0xf4, 0xff}, {0x94, 0xb0, 0xc2, 0xff},
-    {0x56, 0x6c, 0x86, 0xff}, {0x33, 0x3c, 0x57, 0xff},
+const Uint32 palette[16] = {
+    0x1a1c2cff, 0x5d275dff,
+    0xb13e53ff, 0xef7d57ff,
+    0xffcd75ff, 0xa7f070ff,
+    0x38b764ff, 0x257179ff,
+    0x29366fff, 0x3b5dc9ff,
+    0x41a6f6ff, 0x73eff7ff,
+    0xf4f4f4ff, 0x94b0c2ff,
+    0x566c86ff, 0x333c57ff,
 };
 
 class Pallete : public EventReceiver {
@@ -27,8 +28,8 @@ public:
   void render(int x, int y);
   int getSelectedIndex();
   void setSelectedIndex(int index);
-  SDL_Color getSelectedColor();
-  SDL_Color getColor(int index);
+  Uint32 getSelectedColor();
+  Uint32 getColor(int index);
   void handleEvent(SDL_Event &event) override {
     if (event.type == SDL_MOUSEBUTTONDOWN) {
       for (auto it = rectMap.begin(); it != rectMap.end(); ++it) {
@@ -53,11 +54,11 @@ void Pallete::setSelectedIndex(int index) {
   selectedIndex = index;
 }
 
-SDL_Color Pallete::getSelectedColor() {
+Uint32 Pallete::getSelectedColor() {
   return palette[selectedIndex];
 }
 
-SDL_Color Pallete::getColor(int index) {
+Uint32 Pallete::getColor(int index) {
   return palette[index];
 }
 
@@ -81,7 +82,7 @@ void Pallete::render(int x, int y){
 
   for (auto it = rectMap.begin(); it != rectMap.end(); ++it) {
     int i = it->first;
-    SDL_Color color = palette[i];
+    SDL_Color color = Uint32ToColor(palette[i]);
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
     SDL_Rect value = it->second;
